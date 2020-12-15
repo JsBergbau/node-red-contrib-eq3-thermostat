@@ -1,0 +1,117 @@
+<script type="text/javascript">
+    RED.nodes.registerType('Eqiva eQ-3', {
+        category: 'Heating',
+        color: '#e88000',
+        defaults: {
+            name: { value: "Eqiva eQ-3" },
+            mac: { value: "", validate: RED.validators.regex(/^(([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2}))$|^$/) }
+        },
+        inputs: 1,
+        outputs: 1,
+        icon: "font-awesome/fa-thermometer-full",
+        label: function () {
+            return this.name || "Eqiva eQ-3";
+        }
+    });
+</script>
+
+<script type="text/html" data-template-name="Eqiva eQ-3">
+    <div class="form-row">
+        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <input type="text" id="node-input-name" placeholder="Name">
+    </div>
+     <div class="form-row">
+        <label for="node-input-mac"><i class="fa fa-bluetooth"></i> mac</label>
+        <input type="text" id="node-input-mac" placeholder="AA:BB:CC:DD:EE:FF">
+    </div>
+</script>
+
+<script type="text/html" data-help-name="Eqiva eQ-3">
+    <p>This node controls the Eqiva eQ-3 radiator Thermostat.</p>
+    <h3>Inputs</h3>
+    <dl class="message-properties">
+        <dt>payload
+            <span class="property-type">string</span>
+        </dt>
+        <dd> The command you want to send to thermostat. </dd>
+        <dt class="optional">mac <span class="property-type">string</span></dt>
+        <dd> The MAC of the EQ-3-Thermostat you want to control. If set takes precedence of configured MAC in node properties. Format: AA:BB:CC:DD:EE:FF</dd>
+    </dl>
+    <h3>Outputs</h3>
+    <ol class="node-ports">
+        <li>Return value of command
+            <dl class="message-properties">
+                <dt>payload <span class="property-type">JSON</span></dt>
+                <dd>The output of the command.</dd>
+            </dl>
+        </li>
+        <h3>Details</h3>
+        <p><code>msg.payload</code> contains the commands you want to send to radiator thermostat.</p>
+        <p>Obtain the mac address of your thermostat(s) via an App like &quot;nRF Connect&quot; or use <code>sudo hcitool lescan</code>.</p>
+        <p>After each battery insert you have to disable and re-enable bluetooth: Press left button (Mode Menu) for about 3 seconds. Turn control wheel until "bLE" is shown. Press it shortly, then "OFF" will appear, press the wheel shortly again. This disables Bluetooth. Re-Do these steps, but now "ON" will appear. Press the wheel shortly again. This turns on Bluetooth.</p>
+        <p>This node uses the great eQ-3-radiator-thermostat API from Heckie75, see <a href="https://github.com/Heckie75/eQ-3-radiator-thermostat">
+            Github Heckie75/eQ-3-radiator-thermostat.</a></p>
+        <p>Please send only one command and wait for result before sending the next one. If you can't avoid this, use a delay node before this node with a rate limit 
+            of 1 message each 11 seconds. </p>
+        <p>Here are only the main commands listed, since Node-RED is intended for fully controlling your thermostats. 
+            However you still can program all the settings via this node, like shedules, comfort and eco temperature and so on. 
+            Please see API description from Github Heckie75/eQ-3-radiator-thermostat.</p>
+        <p>Send <code>sync</code> for getting current status and syncing time to thermostat <pre>
+Target_temperature: 20
+Valve: 4
+Mode: array[2]
+0: "manual"
+1: "dst"
+Vacation_mode: "off"</pre>
+        </p>
+        <p>send <code>boost</code> for enabling boost function which means 5 minutes valve to 80 %.</p>
+        <p>send <code>boost off</code> for aborting boost function.</p>
+        <p>send <code>temp 21.5</code> for setting current temperature.</p>
+        <p>send <code>on</code> for turning thermostat permanently on (30 °C).</p>
+        <p>send <code>off</code> for turning it off (4.5 °C). Note: You can send temp 1 for setting it even below those 4.5 °C.</p>
+        <p>send <code>manual</code> for manual control. This is the mode you probably want when controlling via Node-RED.</p>
+        <p>send <code>auto</code> for using the timers set in the radiator thermostat.</p>
+        <p>send <code>comfort</code> for setting target temperature tocomfort temperature.</p>
+        <p>send <code>eco</code> for setting target temperature to eco temperature.</p>
+        <p>send <code>comforteco &lt;comfort temperature&gt; &lt;eco temeperature&gt;</code> for setting comfort and eco temperature.</p>
+        <p>send <code>lock</code> for locking thermostat.</p>
+        <p>send <code>unlock</code> for unlocking thermostat again.</p>
+        <p>Send <code>status</code> for getting the status including programmed timers, like
+        <pre>
+object
+mac: "00:1A:22:16:a3:02"
+Target_temperature: 20
+valve: 42
+mode: object
+auto: false
+manual: true
+low battery: false
+open window: false
+vacation: false
+locked: false
+boost: false
+unknown: false
+dst: true
+on: false
+off: false
+vacation: null
+timers: object
+Sat: array[5]
+Sun: array[5]
+Mon: array[5]
+Tue: array[5]
+Wed: array[5]
+Thu: array[5]
+Fri: array[5]
+Weekend: array[5]
+Work: array[5]    
+        </pre></p>
+
+
+
+        <h3>References</h3>
+    <ul>
+        <li><a href="https://github.com/Heckie75/eQ-3-radiator-thermostat">Full API description</a></li>
+        <li><a href="https://github.com/JsBergbau/node-red-contrib-eq3-thermostat">GitHub</a> - the nodes github repository</li>
+    </ul>
+</script>
