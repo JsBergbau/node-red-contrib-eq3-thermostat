@@ -2,11 +2,11 @@
 #
 # Shell script in order to control eQ-3 radiator thermostat
 #
-# Version: 2017-11-04
+# Version: 2020-12-29
 #
 # MIT License
 #
-# Copyright (c) 2017 Martin Heckenbach
+# Copyright (c) 2017-2020 Martin Heckenbach
 #
 # Permission is hereby granted, free of charge, to any person obtaining a copy
 # of this software and associated documentation files (the "Software"), to deal
@@ -30,7 +30,7 @@
 log_user 0
 
 set HELP(about) "\nFull-featured CLI for radiator thermostat eQ-3 CC-RT-BLE\n"
-set HELP(usage) "Usage: <mac> <command> <parameters...>\n"
+set HELP(usage) "Usage: \[<hciX>\] <mac/alias> <command> <parameters...>\n"
 set HELP(sync) "\
   sync                                           - Syncs time and prints target temperature and mode"
 set HELP(window) "\
@@ -96,11 +96,16 @@ set HELP(reset) "\
   reset                                          - Factory reset"
 
 set mac                         ""
+set hci                         ""
 set cmd                         ""
 
 set timeout                     10
 
 set DELAY                       100
+
+set MAC_PATTERN                 "\[0-9A-F]{2}:\[0-9A-F]{2}:\[0-9A-F]{2}:\[0-9A-F]{2}:\[0-9A-F]{2}:\[0-9A-F]{2}"
+set KNOWN_EQIVAS_FILE           "~/.known_eqivas"
+array set known_eqivas          {}
 
 set INIT(device)                1
 set INIT(mode)                  2
@@ -157,19 +162,25 @@ set MODE(32)                  "locked"
 set MODE(64)                  "unknown"
 set MODE(128)                 "low battery"
 
-set thermostat(mac)            ""
-set thermostat(name)           ""
-set thermostat(vendor)         ""
-set thermostat(last_request)   ""
-set thermostat(serial)         ""
-set thermostat(firmware)       ""
-set thermostat(pin)            ""
-set thermostat(status)         ""
-set thermostat(mode)           ""
-set thermostat(valve)          ""
-set thermostat(temperature)    ""
-set thermostat(vacation_date)  ""
-set thermostat(vacation_time)  ""
+set thermostat(mac)                 ""
+set thermostat(name)                ""
+set thermostat(alias)               ""
+set thermostat(vendor)              ""
+set thermostat(last_request)        ""
+set thermostat(serial)              ""
+set thermostat(firmware)            ""
+set thermostat(pin)                 ""
+set thermostat(status)              ""
+set thermostat(mode)                0
+set thermostat(valve)               0.0
+set thermostat(temperature)         0.0
+set thermostat(vacation_date)       ""
+set thermostat(vacation_time)       ""
+set thermostat(comfort_temperature) 0.0
+set thermostat(eco_temperature)     0.0
+set thermostat(window_temperature)  0.0
+set thermostat(window_time)         ""
+set thermostat(offset_temperature)  0.0
 
 set DAYS                    "Sat Sun Mon Tue Wed Thu Fri Weekend Work Everyday"
 
@@ -219,33 +230,75 @@ proc help {} {
   puts ""
 }
 
+proc readKnownEqivas {} {
+  global MAC_PATTERN
+  global KNOWN_EQIVAS_FILE
+  global known_eqivas
+
+  if {[file exists "$KNOWN_EQIVAS_FILE"] == 0} {
+    return
+  }
+
+  set fp [open "$KNOWN_EQIVAS_FILE" r]
+  fconfigure $fp -buffering line
+
+  gets $fp data
+  while {$data != ""} {
+    regexp -nocase "($MAC_PATTERN) (\.+)" $data matched _mac _name
+
+    set known_eqivas($_mac) $_name
+    gets $fp data
+  }
+
+  close $fp
+}
+
+proc lookupKnownEqivaByName {pattern} {
+  global known_eqivas
+  global thermostat
+  foreach _mac [lsort [array names known_eqivas]] {
+    if { [string first "$pattern" $known_eqivas($_mac) ] != -1 } {
+      set thermostat(alias) $known_eqivas($_mac)
+      return $_mac
+    }
+  }
+  return ""
+}
+
 proc parseArgv {argv} {
+  global MAC_PATTERN
+  global KNOWN_EQIVAS_FILE
   global mac
+  global hci
   global cmd
-  
-  
-  
+
   if {[llength $argv] < 2} {
     help
     exit
   }
-  
-  
-  
-  set mac [lindex $argv 0]
 
-  set cmd ""
-  for {set i 1} {$i < [llength $argv]} {incr i} {
-    if {$i > 1} {
-      append cmd " "
-    }
-    if {[regexp -nocase "hci" [lindex $argv $i]]} {
-      puts "Store interface in a global variable here"
-    } else  {
-      append cmd [lindex $argv $i]
-    }
+  if {[string match "hci?" [lindex $argv 0]]} {
+    set hci [lindex $argv 0]
+    set argv [lreplace $argv 0 0]
   }
-  
+
+  set id [lindex $argv 0]
+  set argv [lreplace $argv 0 0]
+
+  set is_mac [regexp -nocase "$MAC_PATTERN" $id]
+  if {$is_mac == 1 } {
+    set mac $id
+  } else {
+    readKnownEqivas
+    set mac [lookupKnownEqivaByName $id]
+  }
+
+  if { $mac == "" } {
+    puts "Device \"$id\" isn't known yet. Please check $KNOWN_EQIVAS_FILE file before using alias."
+    exit
+  }
+
+  set cmd [join $argv " "]
 }
 
 proc checkArgs {argv req command reg} {
@@ -543,6 +596,21 @@ proc parseMode {raw_status} {
     set thermostat(vacation_date) ""
     set thermostat(vacation_time) ""
   }
+
+  if {[llength $raw_status] >= 15} {
+    set thermostat(window_temperature) [hexToTemperature [lindex $raw_status 10]]
+    set thermostat(window_time) [minutesToTime [hexToDecimal [lindex $raw_status 11]] 5]
+    set thermostat(comfort_temperature) [hexToTemperature [lindex $raw_status 12]]
+    set thermostat(eco_temperature) [hexToTemperature [lindex $raw_status 13]]
+    set thermostat(offset_temperature) [expr [hexToTemperature [lindex $raw_status 14]] - 3.5]
+  } else {
+    set thermostat(window_temperature) 0
+    set thermostat(window_time) ""
+    set thermostat(comfort_temperature) 0
+    set thermostat(eco_temperature) 0
+    set thermostat(offset_temperature) 0
+  }
+
 }
 
 proc readTimer {day} {
@@ -588,6 +656,10 @@ proc printDevice {} {
     append out "Device vendor (0x$HANDLES(vendor)):\t\t$thermostat(vendor)\n"
   }
 
+  if {$thermostat(alias) != ""} {
+    append out "Alias:\t\t\t\t$thermostat(alias)"
+  }
+
   append out "\n"
 
   return $out
@@ -616,6 +688,9 @@ proc toJson {} {
 
   append out "\{\n"
   append out "  \"mac\" : \"$thermostat(mac)\",\n"
+  if {$thermostat(alias) != ""} {
+    append out "  \"alias\" : \"$thermostat(alias)\",\n"
+  }
   append out "  \"temperature\" : $thermostat(temperature),\n"
   append out "  \"valve\" : $thermostat(valve),\n"
   append out "  \"mode\" : [getModeAsJson],\n"
@@ -623,6 +698,13 @@ proc toJson {} {
     append out "  \"vacation\" : \"$thermostat(vacation_date) $thermostat(vacation_time)\",\n"
   } else {
     append out "  \"vacation\" : null,\n"
+  }
+  if {[llength $thermostat(status)] >= 15} {
+    append out "  \"comfort_temperature\" : $thermostat(comfort_temperature),\n"
+    append out "  \"eco_temperature\" : $thermostat(eco_temperature),\n"
+    append out "  \"open_window_temperature\" : $thermostat(window_temperature),\n"
+    append out "  \"open_window_time\" : \"$thermostat(window_time)\",\n"
+    append out "  \"offset_temperature\" : $thermostat(offset_temperature),\n"
   }
   append out "  \"timers\" : \{\n"
   for {set day 0} {$day < 9} {incr day} {
@@ -672,6 +754,15 @@ proc printStatus {} {
   } else {
     append out "Vacation mode:\t\t\toff\n"
   }
+
+  if {[llength $thermostat(status)] >= 15} {
+    append out "\nComfort temperature:\t\t$thermostat(comfort_temperature)°C\n"
+    append out "Eco temperature:\t\t$thermostat(eco_temperature)°C\n"
+    append out "\nOpen window temperature:\t$thermostat(window_temperature)°C\n"
+    append out "Open window time:\t\t$thermostat(window_time)\n"
+    append out "\nOffset temperature:\t\t$thermostat(offset_temperature)°C\n"
+  }
+
   if {[log_user] != 0} {
     append out "\nLast request (0x$HANDLES(request)):\t\t$thermostat(last_request)\n"
   }
@@ -766,18 +857,18 @@ proc syncTime {} {
 
   if {$raw_status == ""} {
     puts "ERROR: Thermostat hasn't responded after sync request in time ($timeout sec.)"
-    exit -1  
+    exit -1
   }
 
   parseMode $raw_status
   puts "\n[printStatus]"
-   
+
 }
 
 proc setVacationMode {date daytime temp} {
   global REQUESTS
   global timeout
-  
+
   set part [split $date "-"]
   scan [lindex $part 0] %d year
   scan [lindex $part 1] %d month
@@ -790,10 +881,10 @@ proc setVacationMode {date daytime temp} {
 
   if {$raw_status == ""} {
     puts "ERROR: Thermostat hasn't responded after vacation mode request in time ($timeout sec.)"
-    exit -1  
+    exit -1
   }
 
-  puts "\nVacation mode:\t\t\t$date $daytime $temp°C"
+  puts "\nVacation mode successfully set"
   parseMode $raw_status
   puts "\n[printStatus]"
 }
@@ -851,11 +942,10 @@ proc setComfortEco {comfort eco} {
 
   if {$raw_status == ""} {
     puts "ERROR: Thermostat hasn't responded to after comfort/eco request in time ($timeout sec.)"
-    exit -1  
+    exit -1
   }
 
-  puts "\nComfort temperature:\t\t$comfort°C"
-  puts "Eco temperature:\t\t$eco°C"
+  puts "\nComfort and eco temperature successfully set"
 
   parseMode $raw_status
   puts "\n[printStatus]"
@@ -872,8 +962,7 @@ proc setWindowMode {temp time} {
 
   set raw_status [writeRequest $REQUESTS(setWindowOpen) "[tempToHex $temp][decimalToHex $period]"]
 
-  puts "\nWindow open temperature:\t$temp°C"
-  puts "Window open time:\t\t$time"
+  puts "\nWindow open temperature and time successfully set"
 
   parseMode $raw_status
   puts "\n[printStatus]"
@@ -887,10 +976,10 @@ proc setOffset {temp} {
 
   if {$raw_status == ""} {
     puts "ERROR: Thermostat hasn't responded after offset request in time ($timeout sec.)"
-    exit -1  
+    exit -1
   }
 
-  puts "\nOffset temperature:\t\t$temp°C"
+  puts "\nOffset temperature successfully set"
 
   parseMode $raw_status
   puts "\n[printStatus]"
@@ -914,12 +1003,12 @@ proc setMode {mode} {
       set raw_status [writeRequest $REQUESTS(stopBoost) ""]
     }
   }
-  
+
   if {$raw_status == ""} {
     puts "ERROR: Thermostat hasn't responded after mode request in time ($timeout sec.)"
-    exit -1  
+    exit -1
   }
-  
+
   parseMode $raw_status
   puts "\n[printStatus]"
 }
@@ -943,7 +1032,7 @@ proc setTemperature {temp} {
 
   if {$raw_status == ""} {
     puts "ERROR: Thermostat hasn't responded after temperature request in time ($timeout sec.)"
-    exit -1  
+    exit -1
   }
 
   parseMode $raw_status
@@ -995,7 +1084,7 @@ proc parseSerial {} {
   append pin [expr ( [ascii $serial 4]       ^  [ascii $serial 8])       % 10]
   append pin [expr ( [ascii $serial 5]       ^  [ascii $serial 9])       % 10]
   append pin [expr (([ascii $serial 6] - 48) ^ ([ascii $serial 0] - 65)) % 10]
-  set thermostat(pin) $pin  
+  set thermostat(pin) $pin
 
 }
 
@@ -1014,12 +1103,12 @@ proc otherRequest {command} {
   global timeout
 
   set raw_status [writeRequest $REQUESTS($command) ""]
-  
+
   if {$raw_status == ""} {
     puts "ERROR: Thermostat hasn't responded in time ($timeout sec.)"
-    exit -1  
+    exit -1
   }
-  
+
   parseMode $raw_status
   puts "\n[printStatus]"
 }
@@ -1161,7 +1250,11 @@ proc doCommand {} {
 }
 
 parseArgv $argv
-spawn -noecho /usr/bin/gatttool -I
+if { $hci != "" } {
+  spawn -noecho /usr/bin/gatttool -I -i $hci
+} else {
+  spawn -noecho /usr/bin/gatttool -I
+}
 doCommand
 disconnect
 close -i $spawn_id

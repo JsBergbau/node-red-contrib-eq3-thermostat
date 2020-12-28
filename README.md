@@ -17,11 +17,8 @@ Set `msg.payload` to the command you want to execute. E.g. `temp 20` to set targ
 This node uses no npm dependencies. The only dependencies are expect and Heckie75/eQ-3-radiator-thermostat, which is included in this package. So its very likely that this node won’t receive an update for years. If you notice any kind of issue, feel free to open one on the Github project page.
 
 ## Changing bluetooth interface
-If you want to use another Bluetooth Interface than hci0, go to `<Node-RED Installdir>/node_modules/node-red-contrib-eq3-thermostat/Heckie75-eq3-radiator-thermostat` and change line 1164 from
-` spawn -noecho /usr/bin/gatttool -I`
-to
-` spawn -noecho /usr/bin/gatttool -I -i hci1`
-or another interface you like.
+
+In this updated version you can easily do it in the Node's settings and via msg.interface, see Node's help.
 
 ## License
 GPLv3

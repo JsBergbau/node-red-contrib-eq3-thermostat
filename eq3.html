@@ -4,7 +4,8 @@
         color: '#e88000',
         defaults: {
             name: { value: "Eqiva eQ-3" },
-            mac: { value: "", validate: RED.validators.regex(/^(([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2}))$|^$/) }
+            mac: { value: "", validate: RED.validators.regex(/^(([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2}))$|^$/) },
+            interface: { value: "hci0", validate: RED.validators.regex(/^hci[0-9]+/) }
         },
         inputs: 1,
         outputs: 1,
@@ -24,6 +25,9 @@
         <label for="node-input-mac"><i class="fa fa-bluetooth"></i> mac</label>
         <input type="text" id="node-input-mac" placeholder="AA:BB:CC:DD:EE:FF">
     </div>
+    <div class="form-row">
+        <label for="node-input-interface"><i class="fa fa-bluetooth"></i> mac</label>
+        <input type="text" id="node-input-interface" placeholder="hci0">
 </script>
 
 <script type="text/html" data-help-name="Eqiva eQ-3">
@@ -35,7 +39,9 @@
         </dt>
         <dd> The command you want to send to thermostat. </dd>
         <dt class="optional">mac <span class="property-type">string</span></dt>
-        <dd> The MAC of the EQ-3-Thermostat you want to control. If set takes precedence of configured MAC in node properties. Format: AA:BB:CC:DD:EE:FF</dd>
+        <dd> The MAC of the EQ-3-Thermostat you want to control. If set it takes precedence of configured MAC in node properties. Format: AA:BB:CC:DD:EE:FF</dd>
+        <dt class="optional">interface<span class="property-type">string</span></dt>
+        <dd> The bluetooth interface you want to control the radiator thermostat with. If set it takes precedence of configured interface in node properties, example &quot;hci1&quot;</dd>
     </dl>
     <h3>Outputs</h3>
     <ol class="node-ports">
@@ -44,7 +50,7 @@
                 <dt>payload <span class="property-type">JSON</span></dt>
                 <dd>The output of the command.</dd>
             </dl>
-        </li>
+        </li></ol>
         <h3>Details</h3>
         <p><code>msg.payload</code> contains the commands you want to send to radiator thermostat.</p>
         <p>Obtain the mac address of your thermostat(s) via an App like &quot;nRF Connect&quot; or use <code>sudo hcitool lescan</code>.</p>
@@ -54,59 +60,72 @@
         <p>Please send only one command and wait for result before sending the next one. If you can't avoid this, use a delay node before this node with a rate limit 
             of 1 message each 11 seconds. </p>
         <p>Here are only the main commands listed, since Node-RED is intended for fully controlling your thermostats. 
-            However you still can program all the settings via this node, like shedules, comfort and eco temperature and so on. 
+            However you still can program all the settings via this node, like shedules, comfort and eco temperature and so on. Only aliases aren't officially supported, because for that you have to edit a file within Node-REDs directory structure. Because you can store some kind of aliases within msg.mac this feature wouldn't add much benefits when using inside Node-RED. 
             Please see API description from Github Heckie75/eQ-3-radiator-thermostat.</p>
         <p>Send <code>sync</code> for getting current status and syncing time to thermostat <pre>
-Target_temperature: 20
-Valve: 4
+Target_temperature: 21
+Valve: 12
 Mode: array[2]
 0: "manual"
 1: "dst"
-Vacation_mode: "off"</pre>
+Vacation_mode: "off"
+Comfort_temperature: 21
+Eco_temperature: 17
+Open_window_temperature: 16.5
+Open_window_time: 0
+Offset_temperature: 0
+        </pre>
         </p>
         <p>send <code>boost</code> for enabling boost function which means 5 minutes valve to 80 %.</p>
         <p>send <code>boost off</code> for aborting boost function.</p>
         <p>send <code>temp 21.5</code> for setting current temperature.</p>
         <p>send <code>on</code> for turning thermostat permanently on (30 °C).</p>
-        <p>send <code>off</code> for turning it off (4.5 °C). Note: You can send temp 1 for setting it even below those 4.5 °C.</p>
+        <p>send <code>off</code> for turning it off (4.5 °C). Note: You can send <code>temp 1</code> for setting it even below those 4.5 °C.</p>
         <p>send <code>manual</code> for manual control. This is the mode you probably want when controlling via Node-RED.</p>
         <p>send <code>auto</code> for using the timers set in the radiator thermostat.</p>
-        <p>send <code>comfort</code> for setting target temperature tocomfort temperature.</p>
+        <p>send <code>comfort</code> for setting target temperature to comfort temperature.</p>
         <p>send <code>eco</code> for setting target temperature to eco temperature.</p>
         <p>send <code>comforteco &lt;comfort temperature&gt; &lt;eco temeperature&gt;</code> for setting comfort and eco temperature.</p>
+        <p>send <code>window 16.5 0:30</code> for setting window open mode. These values mean: Reduce target temperature to 16.5 °C for 30 minutes. <br/>Thermostat recognises
+        an open window by a fast drop of temperature. Maximum time of automatically reduced target temperature is 1 hour. If you set higher values time of reduced target temperature may be even shorter, watch the return value and output of <code>sync</code> command.
+        </p>
         <p>send <code>lock</code> for locking thermostat.</p>
         <p>send <code>unlock</code> for unlocking thermostat again.</p>
         <p>Send <code>status</code> for getting the status including programmed timers, like
         <pre>
 object
-mac: "00:1A:22:16:a3:02"
-Target_temperature: 20
-valve: 42
+mac: "AA:BB:CC:DD:EE:FF"
+target_temperature: 21
+valve: 12
 mode: object
-auto: false
-manual: true
-low battery: false
-open window: false
-vacation: false
-locked: false
-boost: false
-unknown: false
-dst: true
-on: false
-off: false
+    auto: false
+    manual: true
+    low battery: false
+    open window: false
+    vacation: false
+    locked: false
+    boost: false
+    unknown: false
+    dst: true
+    on: false
+    off: false
 vacation: null
-timers: object
-Sat: array[5]
-Sun: array[5]
-Mon: array[5]
-Tue: array[5]
-Wed: array[5]
-Thu: array[5]
-Fri: array[5]
+comfort_temperature: 21
+eco_temperature: 17
+open_window_temperature: 16.5
+open_window_time: "00:05"
+offset_temperature: 0
+    timers: object
+    Sat: array[5]
+    Sun: array[5]
+    Mon: array[5]
+    Tue: array[5]
+    Wed: array[5]
+    Thu: array[5]
+    Fri: array[5]
 Weekend: array[5]
 Work: array[5]    
         </pre></p>
-
 
 
         <h3>References</h3>
