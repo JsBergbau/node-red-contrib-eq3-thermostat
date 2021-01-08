@@ -1,19 +1,19 @@
 <script type="text/javascript">
-    RED.nodes.registerType('Eqiva eQ-3', {
-        category: 'Heating',
-        color: '#e88000',
-        defaults: {
-            name: { value: "Eqiva eQ-3" },
-            mac: { value: "", validate: RED.validators.regex(/^(([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2}))$|^$/) },
-            interface: { value: "hci0", validate: RED.validators.regex(/^hci[0-9]+/) }
-        },
-        inputs: 1,
-        outputs: 1,
-        icon: "font-awesome/fa-thermometer-full",
-        label: function () {
-            return this.name || "Eqiva eQ-3";
-        }
-    });
+	RED.nodes.registerType('Eqiva eQ-3', {
+		category: 'Heating',
+		color: '#e88000',
+		defaults: {
+			name: { value: "Eqiva eQ-3" },
+			mac: { value: "", validate: RED.validators.regex(/^(([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2}))$|^$/) },
+			interface: { value: "hci0", validate: RED.validators.regex(/^hci[0-9]+/) }
+		},
+		inputs: 1,
+		outputs: 1,
+		icon: "font-awesome/fa-thermometer-full",
+		label: function () {
+			return this.name || "Eqiva eQ-3";
+		}
+	});
 </script>
 
 <script type="text/html" data-template-name="Eqiva eQ-3">
@@ -53,8 +53,26 @@
         </li></ol>
         <h3>Details</h3>
         <p><code>msg.payload</code> contains the commands you want to send to radiator thermostat.</p>
-        <p>Obtain the mac address of your thermostat(s) via an App like &quot;nRF Connect&quot; or use <code>sudo hcitool lescan</code>.</p>
-        <p>After each battery insert you have to disable and re-enable bluetooth: Press left button (Mode Menu) for about 3 seconds. Turn control wheel until "bLE" is shown. Press it shortly, then "OFF" will appear, press the wheel shortly again. This disables Bluetooth. Re-Do these steps, but now "ON" will appear. Press the wheel shortly again. This turns on Bluetooth.</p>
+		<p>Obtain the mac address of your thermostat(s) via an App like &quot;nRF Connect&quot; or use <code>sudo hcitool lescan</code>.</p>
+		<p>There seem to be 3 different firmware versions regarding Bluetooth connectivity</p>
+		<ol>
+			<li> Oldest version. Bluetooth is ready after thermostat is setup. You can directly use it with this script. This version does not provide additional information like offset temperature by a simple sync request.</li>
+			<li> After each battery insert you have to disable and re-enable bluetooth: Press left button (Mode Menu) for about 3 seconds. Turn control wheel until "bLE" is shown.
+				 Press it shortly, then "OFF" will appear, press the wheel shortly again. This disables Bluetooth. Re-Do these steps, but now "ON" will appear. Press the wheel shortly again. This turns on Bluetooth.
+			<li> Latest version installed in January 2021 by update via App. With integrated bluetooth of Raspberry Pi 4 and Zero W you have to pair before you can control them. To do so go to commandline:
+<pre>
+sudo bluetoothctl
+scan on
+&lt;wait until mac of new Eqiva EQ3 appears&gt;
+scan off
+pair &lt;MAC&gt;
+&lt;Enter 6 digit number, getting by longpressing control wheel&gt;
+disconnect &lt;MAC&gt;
+</pre>
+		Disconnecting is essential, otherwise bluetoothctl stays connected and you can't control the thermostat.
+		<p>With an external USB Bluetooth Receiver it was still possible to control the thermostat without pairing. So there is a false sense of security with new firmware.</p>
+		<p>With <code>unpair &lt;MAC&gt;</code> in bluetoothctl you can undo the pairing.</p>
+			</ol>
         <p>This node uses the great eQ-3-radiator-thermostat API from Heckie75, see <a href="https://github.com/Heckie75/eQ-3-radiator-thermostat">
             Github Heckie75/eQ-3-radiator-thermostat.</a></p>
         <p>Please send only one command and wait for result before sending the next one. If you can't avoid this, use a delay node before this node with a rate limit 
@@ -88,7 +106,12 @@ Offset_temperature: 0
         <p>send <code>comforteco &lt;comfort temperature&gt; &lt;eco temeperature&gt;</code> for setting comfort and eco temperature.</p>
         <p>send <code>window 16.5 0:30</code> for setting window open mode. These values mean: Reduce target temperature to 16.5 °C for 30 minutes. <br/>Thermostat recognises
         an open window by a fast drop of temperature. Maximum time of automatically reduced target temperature is 1 hour. If you set higher values time of reduced target temperature may be even shorter, watch the return value and output of <code>sync</code> command.
-        </p>
+		</p>
+		<p>send <code>offset &lt;value from -3.5 to 3.5 in 0.5 °C steps&gt;</code> for setting an offset temperature. For example, you set your thermostat to 20 °C but your room thermometer displays only 18 °C. 
+		Then send <code>offset -2</code>. If your thermometer displays 21 °C, send <code>offset 1</code>. Of course offset may vary depending on position of the radiator thermostat, outdoor temperature (especially in corners) and flow temperature. 
+	The thermostat seems to have a correction algorithm for that. In my testroom temperature set on thermostat is quite accurate. 
+	Now suppose we have 20 °C an offset 0. Now we set target temperature to 21 °C and valve opens to 44 %. So now setting target temperature of 20 °C but with an offset of -1 makes the thermostat think room has only 19 °C 
+and wants to heat up 1 °C more, so it should also heat to 21 °C. However in this testcase valve was closed completely. So use this feature carefully. Maybe on the longrun it works better.</p>
         <p>send <code>lock</code> for locking thermostat.</p>
         <p>send <code>unlock</code> for unlocking thermostat again.</p>
         <p>Send <code>status</code> for getting the status including programmed timers, like

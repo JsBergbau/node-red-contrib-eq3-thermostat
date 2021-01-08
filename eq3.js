@@ -23,7 +23,7 @@ function textToJson(text) {
 	if (text.match(/\n?timer/i)) {
 		return { timer: text }
 	}
-	var myRegex = /(^.*:)[ \t]+([\w].*$)/gm;
+	var myRegex = /(^.*:)[ \t]+(-?[\w].*$)/gm;
 	var match = myRegex.exec(text);
 
 	while (match != null) {
