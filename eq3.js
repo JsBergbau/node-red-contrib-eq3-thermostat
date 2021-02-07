@@ -12,9 +12,11 @@ function textToJson(text) {
 	//console.log("str", new String(text));
 	text = text.replace(/^[\t ]*Temperature/m, "Target_temperature");
 	text = text.replace(/^[\t ]*"temperature/m, "\"target_temperature");
-	try {
-		res = JSON.parse(text);
 
+	try { //for json output of script
+		res = JSON.parse(text);
+		res.mode.low_battery = res.mode["low battery"];
+		res.mode.open_window = res.mode["open window"];
 		return res;
 	}
 	catch (error) {
@@ -25,7 +27,6 @@ function textToJson(text) {
 	}
 	var myRegex = /(^.*:)[ \t]+(-?[\w].*$)/gm;
 	var match = myRegex.exec(text);
-
 	while (match != null) {
 		var key = match[1].replace(/ /g, "_").replace(":", "");
 		var val = match[2].trim().split(" ");

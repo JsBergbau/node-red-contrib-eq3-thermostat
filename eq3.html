@@ -139,6 +139,8 @@ mode: object
     dst: true
     on: false
     off: false
+    low_battery: false
+    open_window: false
 vacation: null
 comfort_temperature: 21
 eco_temperature: 17
@@ -156,6 +158,9 @@ offset_temperature: 0
 Weekend: array[5]
 Work: array[5]    
         </pre></p>
+<p>In mode object you see &quot;low battery&quot; and &quot;low_battery&quot;, same for open window. Original script uses space in key name. 
+However having the key without space makes it sometimes more easy to use this value.
+So this is why these key/value pairs are included twice.</p>
 
 
         <h3>References</h3>
