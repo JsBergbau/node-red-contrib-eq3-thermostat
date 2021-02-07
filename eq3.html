@@ -5,29 +5,35 @@
 		defaults: {
 			name: { value: "Eqiva eQ-3" },
 			mac: { value: "", validate: RED.validators.regex(/^(([0-9A-Fa-f]{2}[:]){5}([0-9A-Fa-f]{2}))$|^$/) },
-			interface: { value: "hci0", validate: RED.validators.regex(/^hci[0-9]+/) }
+			interface: { value: "hci0", validate: RED.validators.regex(/^hci[0-9]+/) },
+			topic: { value: "" }
 		},
 		inputs: 1,
 		outputs: 1,
 		icon: "font-awesome/fa-thermometer-full",
 		label: function () {
-			return this.name || "Eqiva eQ-3";
+			return this.name || this.topic || "Eqiva eQ-3";
 		}
 	});
 </script>
 
 <script type="text/html" data-template-name="Eqiva eQ-3">
     <div class="form-row">
-        <label for="node-input-name"><i class="fa fa-tag"></i> Name</label>
+        <label for="node-input-name"><i class="fa fa-tag"></i>Name</label>
         <input type="text" id="node-input-name" placeholder="Name">
     </div>
      <div class="form-row">
-        <label for="node-input-mac"><i class="fa fa-bluetooth"></i> mac</label>
+        <label for="node-input-mac"><i class="fa fa-bluetooth"></i>MAC</label>
         <input type="text" id="node-input-mac" placeholder="AA:BB:CC:DD:EE:FF">
     </div>
     <div class="form-row">
-        <label for="node-input-interface"><i class="fa fa-bluetooth"></i> mac</label>
-        <input type="text" id="node-input-interface" placeholder="hci0">
+        <label for="node-input-interface"><i class="fa fa-bluetooth"></i>Interface</label>
+		<input type="text" id="node-input-interface" placeholder="hci0">
+	</div>
+	<div class="form-row">
+        <label for="node-input-topic"><i class="fa fa-tag"></i>Topic</label>
+		<input type="text" id="node-input-topic" placeholder="If set overrides message topic">
+	</div>	
 </script>
 
 <script type="text/html" data-help-name="Eqiva eQ-3">
@@ -71,7 +77,8 @@ disconnect &lt;MAC&gt;
 </pre>
 		Disconnecting is essential, otherwise bluetoothctl stays connected and you can't control the thermostat.
 		<p>With an external USB Bluetooth Receiver it was still possible to control the thermostat without pairing. So there is a false sense of security with new firmware.</p>
-		<p>With <code>unpair &lt;MAC&gt;</code> in bluetoothctl you can undo the pairing.</p>
+		<p>With <code>paired-devices</code> in bluetoothctl you see all paired devices.</p>
+		<p>With <code>unpair &lt;MAC&gt;</code> in bluetoothctl you can undo the pairing.</p>		
 			</ol>
         <p>This node uses the great eQ-3-radiator-thermostat API from Heckie75, see <a href="https://github.com/Heckie75/eQ-3-radiator-thermostat">
             Github Heckie75/eQ-3-radiator-thermostat.</a></p>

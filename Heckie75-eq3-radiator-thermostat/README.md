@@ -49,9 +49,9 @@ Timers:
 Configuration:
  comforteco <temp_comfort> <temp_eco>           - Sets comfort and eco temperature in °C
                                                   temp: 5.0 to 29.5 in intervals of 0.5°C, e.g. 19.5
- window <temp> <hh:mm>                          - Sets temperature in °C and period for open window mode
-                                                  temp: 5.0 to 29.5 in intervals of 0.5°C, e.g. 19.5
-                                                  hh:mm: time where minutes in intervals of 5 minutes, e.g. 02:05
+ window <temp> <h:mm>                           - Sets temperature in °C and period for open window mode
+                                                  temp: 5.0 to 29.5 in intervals of 0.5°C, e.g. 19.5 
+                                                  h:mm: time where minutes in intervals of 5 minutes but max. 1 hour, e.g. 1:00
  offset <offset>                                - Sets the offset temperature in °C
                                                   offset: temperature between -3.5 and 3.5 in intervals of 0.5°C, e.g. 1.5
 
@@ -365,3 +365,15 @@ Valve:                  42%
 Mode:                   manual
 Vacation mode:          off
 ```
+
+## Integration in third-party tools
+
+Over the time this script has been taken and integrated in several projects, e.g.
+
+* Node-RED, see [node-red-contrib-eq3-thermostat](https://flows.nodered.org/node/node-red-contrib-eq3-thermostat)
+* OpenHAB, see [Eqiva Bluetooth Thermostat in openHAB](https://www.boringhome.de/eqiva-thermostat-openhab/) (german manual)
+* Kodi, see [kodi-addon-eq3-thermostat](https://github.com/Heckie75/kodi-addon-eq3-thermostat) 
+
+This is just a selection without any recommendation. 
+
+In addition I've seen discussions about integration in FHEM. There are a few projects that have taken the documentation of the API in order to implement simular scripts by using languages like Python or JavaScript (Node JS).

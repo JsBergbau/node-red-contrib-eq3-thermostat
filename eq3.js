@@ -76,6 +76,10 @@ module.exports = function (RED) {
 				deviceMAC = msg.MAC;
 			}
 
+			if (config.topic) {
+				msg.topic = config.topic;
+			}
+
 			let blInterface = msg.interface || config.interface;
 
 			if (! /^hci[0-9]+$/.test(blInterface)) {
@@ -112,10 +116,13 @@ module.exports = function (RED) {
 			msg.payload = msg.payload.replace(/temperature/i, "temp");
 			//console.log("exec: ",expect, eQ3Cmd, blInterface, deviceMAC, msg.payload);
 			execFile(expect, [eQ3Cmd, blInterface, deviceMAC, msg.payload], { encoding: "utf8" }, function (error, stdout, stderr) {
+				let time = new Date();
+				const timeoptions = { year: 'numeric', month: 'numeric', day: 'numeric', hour: 'numeric', minute:'numeric' , second: 'numeric'};
+				time = time.toLocaleDateString(undefined,timeoptions);
 
 				if (error) {
 					console.log(error);
-					node.status({ fill: "red", shape: "dot", text: "Error connecting to device ..." })
+					node.status({ fill: "red", shape: "dot", text: time + ": Error connecting to device ..." })
 					let blInterfaces = execFileSync("hciconfig", { encoding: "utf8" }).trim();
 					if (!blInterfaces.includes(blInterface)) {
 						done("Error connecting to device, Interface " + blInterface + " not found", msg);
@@ -128,7 +135,7 @@ module.exports = function (RED) {
 				else {
 					msg.payload = textToJson(stdout);
 					send(msg);
-					node.status({ fill: "green", shape: "dot", text: "All operations finished." })
+					node.status({ fill: "green", shape: "dot", text: time + ": All operations finished." })
 				}
 
 				if (done) {
