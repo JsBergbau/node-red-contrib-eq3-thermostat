@@ -59,11 +59,33 @@ module.exports = function (RED) {
 	function eq3thermostat(config) {
 		RED.nodes.createNode(this, config);
 		var node = this;
+		node.msg_list = []
+		node.running = false
 
 		let deviceMAC = config.mac;
 
 		//console.log("config:",config);
 		node.on('input', function (msg, send, done) {
+			//push msg to buffer
+			node.msg_list.push({msg, send, done})
+			//check if currently processing other msg
+			if(!node.running){
+				node.running = true
+				chk_buffer()
+			}
+		})
+		
+		function chk_buffer(){
+			//processes next buffered msg
+			if(node.msg_list.length > 0){
+				var buffered = node.msg_list.shift()
+				process_msg(buffered.msg, buffered.send, buffered.done)
+			}else{
+				node.running = false
+			}
+		}
+		
+		function process_msg(msg, send, done){
 			// For maximum backwards compatibility, check that send exists.
 			// If this node is installed in Node-RED 0.x, it will need to
 			// fallback to using `node.send`
@@ -143,9 +165,11 @@ module.exports = function (RED) {
 					done();
 				}
 
+				//after processing msg and response, check buffer for next msg
+				chk_buffer(send, done)
 
 			});
-		});
+		};
 
 		node.on('close', function () {
 			//node.warn("closing");
