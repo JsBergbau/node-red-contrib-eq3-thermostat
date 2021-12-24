@@ -82,8 +82,7 @@ disconnect &lt;MAC&gt;
 			</ol>
         <p>This node uses the great eQ-3-radiator-thermostat API from Heckie75, see <a href="https://github.com/Heckie75/eQ-3-radiator-thermostat">
             Github Heckie75/eQ-3-radiator-thermostat.</a></p>
-        <p>Please send only one command and wait for result before sending the next one. If you can't avoid this, use a delay node before this node with a rate limit 
-            of 1 message each 11 seconds. </p>
+        <p>Node has a message buffer. That means all messages will be processed. So be careful and don't send too many messages. If you can't avoid this and commands may pile up, use a delay node before this node with a rate limit of 1 message every 30s (11s should be the minimum). </p>
         <p>Here are only the main commands listed, since Node-RED is intended for fully controlling your thermostats. 
             However you still can program all the settings via this node, like shedules, comfort and eco temperature and so on. Only aliases aren't officially supported, because for that you have to edit a file within Node-REDs directory structure. Because you can store some kind of aliases within msg.mac this feature wouldn't add much benefits when using inside Node-RED. 
             Please see API description from Github Heckie75/eQ-3-radiator-thermostat.</p>

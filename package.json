@@ -1,15 +1,38 @@
 {
-  "name": "node-red-contrib-eq3-thermostat",
-  "version": "1.0.6",
+  "_from": "node-red-contrib-eq3-thermostat@1.0.7",
+  "_id": "node-red-contrib-eq3-thermostat@1.0.7",
+  "_inBundle": false,
+  "_integrity": "sha512-0aSIqc5Yz7xzZF8C9SAQo4Clw0FJgWnthRw2dUJJKGtsIHB6URmQ8o8zO/q/aG4xMFg9nA3d7GWWZNx10dAGDw==",
+  "_location": "/node-red-contrib-eq3-thermostat",
+  "_phantomChildren": {},
+  "_requested": {
+    "type": "version",
+    "registry": true,
+    "raw": "node-red-contrib-eq3-thermostat@1.0.7",
+    "name": "node-red-contrib-eq3-thermostat",
+    "escapedName": "node-red-contrib-eq3-thermostat",
+    "rawSpec": "1.0.7",
+    "saveSpec": null,
+    "fetchSpec": "1.0.7"
+  },
+  "_requiredBy": [
+    "#USER",
+    "/"
+  ],
+  "_resolved": "https://registry.npmjs.org/node-red-contrib-eq3-thermostat/-/node-red-contrib-eq3-thermostat-1.0.7.tgz",
+  "_shasum": "8a08b9fbba07ae83224fcd0000d43ff34b2b5a5d",
+  "_spec": "node-red-contrib-eq3-thermostat@1.0.7",
+  "_where": "/home/pi/.node-red",
+  "author": {
+    "name": "JSBergbau"
+  },
+  "bugs": {
+    "url": "https://github.com/JsBergbau/node-red-contrib-eq3-thermostat/issues"
+  },
+  "bundleDependencies": false,
+  "deprecated": false,
   "description": "Control Eqiva eQ-3 radiator thermostat",
-  "main": "eq3.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/JsBergbau/node-red-contrib-eq3-thermostat.git"
-  },
+  "homepage": "https://github.com/JsBergbau/node-red-contrib-eq3-thermostat",
   "keywords": [
     "eQ-3",
     "eq3",
@@ -24,15 +47,20 @@
     "bluetooth thermostat",
     "thermostat bluetooth"
   ],
+  "license": "GPL-3.0-only",
+  "main": "eq3.js",
+  "name": "node-red-contrib-eq3-thermostat",
   "node-red": {
     "nodes": {
       "Eqiva eQ-3": "eq3.js"
     }
   },
-  "author": "JSBergbau",
-  "license": "GPL-3.0-only",
-  "bugs": {
-    "url": "https://github.com/JsBergbau/node-red-contrib-eq3-thermostat/issues"
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/JsBergbau/node-red-contrib-eq3-thermostat.git"
   },
-  "homepage": "https://github.com/JsBergbau/node-red-contrib-eq3-thermostat"
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "version": "1.0.7"
 }
